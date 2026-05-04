@@ -101,11 +101,17 @@ async function removeSong(songId: number) {
 async function loadAllSongs() {
   showAddPanel.value = !showAddPanel.value
   if (!showAddPanel.value) return
+  
   try {
-    const { data } = await request.post('/songs/view_all', {}, { params: { page: 1, page_size: 1000 } })
+    const { data } = await request.post('/songs/view_all', {}, { 
+      params: { page: 1, page_size: 100 }
+    })
+    
     const existingIds = new Set(songs.value.map((s: any) => s.id))
     allSongs.value = (data.songs || []).filter((s: any) => !existingIds.has(s.id))
-  } catch (err) { console.error(err) }
+  } catch (err: any) {
+    console.error('加载歌曲失败:', err)
+  }
 }
 
 async function addSongToPlaylist(songId: number) {
