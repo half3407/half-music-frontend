@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
 import { getImageUrl } from '@/utils/image'
+import { usePlayerStore } from '@/stores/player'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,6 +19,8 @@ const editing = ref(false)
 const editForm = ref<any>({})
 
 const isAdmin = computed(() => userStore.isAdmin)
+
+const player = usePlayerStore()
 
 onMounted(() => loadSong())
 
@@ -127,6 +130,7 @@ async function deleteSong() {
               <button @click="editing = true">✏️ 编辑</button>
               <button class="danger" @click="deleteSong">🗑️ 删除</button>
             </div>
+            <button v-if="song.url" class="big-play" @click="player.play(song)">▶ 播放</button>
           </template>
         </div>
       </div>
@@ -184,4 +188,14 @@ async function deleteSong() {
 .time { color: #999; }
 .comment-content { margin: 0; color: #333; line-height: 1.6; }
 .del-comment { position: absolute; top: 12px; right: 12px; padding: 2px 8px; background: #ff4757; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+.big-play {
+  margin-top: 16px;
+  padding: 10px 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 24px;
+  font-size: 16px;
+  cursor: pointer;
+}
 </style>

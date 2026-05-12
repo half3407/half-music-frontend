@@ -26,15 +26,21 @@ function onPlCoverChange(e: Event) {
   if (t.files?.[0]) plCoverFile.value = t.files[0]
 }
 
+// 上传歌单封面
 async function uploadPlCover() {
   if (!plCoverFile.value) return alert('请选择封面')
   const fd = new FormData()
   fd.append('file', plCoverFile.value)
-  const { data } = await request.post('/files/cover', fd, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
-  plCoverUrl.value = data.data.file_url
-  alert('封面上传成功！')
+  try {
+    const { data } = await request.post('/files/cover', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    plCoverUrl.value = data.data.file_url
+    alert('封面上传成功！')
+  } catch (err: any) {
+    alert(err.response?.data?.detail || '封面上传失败')
+    console.error('封面上传失败:', err.response?.data)
+  }
 }
 
 async function createPlaylist() {
@@ -75,26 +81,38 @@ function onSongCoverChange(e: Event) {
   if (t.files?.[0]) sCoverFile.value = t.files[0]
 }
 
+// 上传音频
 async function uploadAudio() {
   if (!sAudioFile.value) return alert('请选择音频')
   const fd = new FormData()
   fd.append('file', sAudioFile.value)
-  const { data } = await request.post('/files/song', fd, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
-  sAudioUrl.value = data.data.file_url
-  alert('音频上传成功！')
+  try {
+    const { data } = await request.post('/files/song', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    sAudioUrl.value = data.data.file_url
+    alert('音频上传成功！')
+  } catch (err: any) {
+    alert(err.response?.data?.detail || '音频上传失败')
+    console.error('音频上传失败:', err.response?.data)
+  }
 }
 
+// 上传歌曲封面
 async function uploadSongCover() {
   if (!sCoverFile.value) return alert('请选择封面')
   const fd = new FormData()
   fd.append('file', sCoverFile.value)
-  const { data } = await request.post('/files/cover', fd, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
-  sCoverUrl.value = data.data.file_url
-  alert('封面上传成功！')
+  try {
+    const { data } = await request.post('/files/cover', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    sCoverUrl.value = data.data.file_url
+    alert('封面上传成功！')
+  } catch (err: any) {
+    alert(err.response?.data?.detail || '封面上传失败')
+    console.error('封面上传失败:', err.response?.data)
+  }
 }
 
 async function createSong() {

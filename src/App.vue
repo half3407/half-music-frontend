@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
+import MusicPlayer from '@/components/MusicPlayer.vue'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -36,6 +37,7 @@ function logout() {
     <main>
       <router-view />
     </main>
+    <MusicPlayer />
   </div>
 </template>
 

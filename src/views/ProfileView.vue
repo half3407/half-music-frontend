@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
+import { getImageUrl } from '@/utils/image'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -131,7 +132,13 @@ async function deleteAccount() {
       <div class="profile-card">
         <div class="avatar-section">
           <div class="avatar">
-            <img v-if="userStore.avatarUrl" :src="userStore.avatarUrl" alt="avatar" />
+            <!-- 关键：src 必须用 getImageUrl 包裹 -->
+            <img 
+              v-if="userStore.avatarUrl" 
+              :src="getImageUrl(userStore.avatarUrl)" 
+              alt="avatar"
+              @error="userStore.avatarUrl = ''"
+            />
             <span v-else>👤</span>
           </div>
           <div class="avatar-upload">

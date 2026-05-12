@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
 import { getImageUrl } from '@/utils/image'
+import { usePlayerStore } from '@/stores/player'
 
 const route = useRoute()
 const router = useRouter()
@@ -29,6 +30,8 @@ const isOwnerOrAdmin = computed(() => {
   const isOwner = String(playlist.value.creater_id) === String(userStore.userId)
   return isOwner || userStore.isAdmin
 })
+
+const player = usePlayerStore()
 
 onMounted(() => loadPlaylist())
 
@@ -191,7 +194,9 @@ async function addSongToPlaylist(songId: number) {
               <p class="song-singer">{{ song.singer }}</p>
             </div>
             <button v-if="isOwnerOrAdmin" class="remove-btn" @click="removeSong(song.id)">移除</button>
-            <router-link :to="`/song/${song.id}`" class="play-btn">▶</router-link>
+            <router-link :to="`/song/${song.id}`" class="play-btn">
+              <button class="play-btn" @click="player.play(song, songs)">▶</button>
+            </router-link>
           </div>
         </div>
       </div>

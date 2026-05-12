@@ -2,17 +2,20 @@
 import { ref, onMounted } from 'vue'
 import request from '@/utils/request'
 import { getImageUrl } from '@/utils/image'
+import { usePlayerStore } from '@/stores/player'
 
 interface Song {
   id: number
   name: string
   singer: string
   cover_url?: string
+  url?: string
 }
 
 const songs = ref<Song[]>([])
 const loading = ref(false)
 const error = ref('')
+const player = usePlayerStore()
 
 onMounted(async () => {
   loading.value = true
@@ -27,6 +30,14 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function handlePlay(song: Song) {
+  if (song.url) {
+    player.play(song, songs.value)
+  } else {
+    alert('暂无音频')
+  }
+}
 </script>
 
 <template>
@@ -36,19 +47,21 @@ onMounted(async () => {
     <div v-else-if="error" class="status error">{{ error }}</div>
     <div v-else-if="songs.length === 0" class="status">暂无歌曲</div>
     <div v-else class="song-grid">
-      <router-link
+      <div
         v-for="song in songs"
         :key="song.id"
-        :to="`/song/${song.id}`"
         class="song-card"
       >
-        <div class="song-cover">
-          <img v-if="song.cover_url" :src="getImageUrl(song.cover_url)" :alt="song.name" />
-          <div v-else class="cover-placeholder">🎵</div>
+        <div class="card-main" @click="handlePlay(song)">
+          <div class="song-cover">
+            <img v-if="song.cover_url" :src="getImageUrl(song.cover_url)" :alt="song.name" />
+            <div v-else class="cover-placeholder">🎵</div>
+          </div>
+          <h3>{{ song.name }}</h3>
+          <p class="singer">🎤 {{ song.singer }}</p>
         </div>
-        <h3>{{ song.name }}</h3>
-        <p class="singer">🎤 {{ song.singer }}</p>
-      </router-link>
+        <router-link :to="`/song/${song.id}`" class="detail-link" @click.stop>详情 →</router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -65,4 +78,6 @@ onMounted(async () => {
 .cover-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 48px; }
 h3 { margin: 12px 0 6px; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .singer { margin: 0; color: #888; font-size: 13px; }
+.card-main { cursor: pointer; }
+.detail-link { display: block; text-align: center; margin-top: 8px; font-size: 12px; color: #667eea; text-decoration: none; }
 </style>
