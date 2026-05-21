@@ -1,12 +1,38 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { usePlayerStore } from '@/stores/player'
 
 const player = usePlayerStore()
-const audioRef = ref<HTMLAudioElement | null>(null)
+const audioRef = ref<HTMLAudioElement>()
 const progress = ref(0)
 const currentTime = ref('0:00')
 const duration = ref('0:00')
+
+// 波形数据（模拟）
+const waveBars = ref<number[]>([])
+const barCount = 60
+
+function generateWave() {
+  waveBars.value = Array.from({ length: barCount }, () => 
+    Math.random() * 0.6 + 0.2
+  )
+}
+
+// 播放时波形动画
+let waveInterval: number
+function startWaveAnimation() {
+  generateWave()
+  waveInterval = window.setInterval(() => {
+    waveBars.value = waveBars.value.map(h => {
+      const change = (Math.random() - 0.5) * 0.3
+      return Math.max(0.1, Math.min(0.9, h + change))
+    })
+  }, 100)
+}
+
+function stopWaveAnimation() {
+  clearInterval(waveInterval)
+}
 
 onMounted(() => {
   if (audioRef.value) {
@@ -19,6 +45,10 @@ onMounted(() => {
       currentTime.value = fmt(audioRef.value.currentTime)
       duration.value = fmt(audioRef.value.duration || 0)
     })
+
+    audioRef.value.addEventListener('play', startWaveAnimation)
+    audioRef.value.addEventListener('pause', stopWaveAnimation)
+    audioRef.value.addEventListener('ended', stopWaveAnimation)
   }
 })
 
@@ -37,39 +67,62 @@ function seek(e: MouseEvent) {
     audioRef.value.currentTime = pct * audioRef.value.duration
   }
 }
+
+const activeBars = computed(() => {
+  return Math.floor((progress.value / 100) * barCount)
+})
 </script>
 
 <template>
-  <div>
+  <div v-if="player.currentSong" class="player">
     <audio ref="audioRef" />
 
-    <div v-if="player.currentSong" class="player">
-      <!-- 歌曲信息 -->
-      <div class="info">
-        <div class="cover">🎵</div>
-        <div class="meta">
-          <p class="name">{{ player.currentSong.name || player.currentSong.song_name }}</p>
-          <p class="singer">{{ player.currentSong.singer || player.currentSong.song_singer }}</p>
-        </div>
+    <!-- 左侧：歌曲信息 -->
+    <div class="player-left">
+      <div class="cover">
+        <img v-if="player.currentSong.cover_url" :src="player.currentSong.cover_url" />
+        <span v-else>🎵</span>
       </div>
+      <div class="info">
+        <p class="name">{{ player.currentSong.name || player.currentSong.song_name }}</p>
+        <p class="artist">{{ player.currentSong.singer || player.currentSong.song_singer }}</p>
+      </div>
+    </div>
 
-      <!-- 控制按钮 -->
+    <!-- 中间：控制 + 波形 -->
+    <div class="player-center">
       <div class="controls">
-        <button @click="player.prev">⏮</button>
-        <button class="big" @click="player.toggle">
+        <button class="ctrl-btn" @click="player.prev">⏮</button>
+        <button class="play-btn" @click="player.toggle">
           {{ player.isPlaying ? '⏸' : '▶' }}
         </button>
-        <button @click="player.next">⏭</button>
+        <button class="ctrl-btn" @click="player.next">⏭</button>
       </div>
 
-      <!-- 进度条 -->
-      <div class="progress-wrap" @click="seek">
-        <span class="time">{{ currentTime }}</span>
-        <div class="bar">
-          <div class="fill" :style="{ width: progress + '%' }"></div>
+      <!-- 波形进度条 -->
+      <div class="wave-container" @click="seek">
+        <div class="wave-bars">
+          <div
+            v-for="(h, i) in waveBars"
+            :key="i"
+            class="wave-bar"
+            :class="{ active: i < activeBars }"
+            :style="{ height: `${h * 100}%` }"
+          />
         </div>
-        <span class="time">{{ duration }}</span>
+        <div class="time-overlay">
+          <span>{{ currentTime }}</span>
+          <span>{{ duration }}</span>
+        </div>
       </div>
+    </div>
+
+    <!-- 右侧：额外控制 -->
+    <div class="player-right">
+      <button class="icon-btn">🔀</button>
+      <button class="icon-btn">🔁</button>
+      <button class="icon-btn">🔊</button>
+      <button class="icon-btn">📋</button>
     </div>
   </div>
 </template>
@@ -78,110 +131,175 @@ function seek(e: MouseEvent) {
 .player {
   position: fixed;
   bottom: 0;
-  left: 0;
+  left: var(--sidebar-width);
   right: 0;
-  height: 64px;
-  background: #1a1a2e;
-  color: #fff;
+  height: var(--player-height);
+  background: white;
+  border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  gap: 20px;
+  padding: 0 24px;
+  gap: 24px;
   z-index: 1000;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
 }
 
-.info {
+/* 左侧信息 */
+.player-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: 180px;
+  gap: 12px;
+  width: 200px;
   flex-shrink: 0;
 }
 
 .cover {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
   background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
 }
 
-.meta {
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info {
   overflow: hidden;
 }
 
 .name {
   margin: 0;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.singer {
-  margin: 3px 0 0;
-  font-size: 11px;
-  color: #aaa;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.artist {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* 中间控制区 */
+.player-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
-.controls button {
+.ctrl-btn {
   background: none;
   border: none;
-  color: #fff;
   font-size: 18px;
+  color: var(--text-secondary);
   cursor: pointer;
-  opacity: 0.85;
+  opacity: 0.7;
   transition: opacity 0.2s;
 }
 
-.controls button:hover {
+.ctrl-btn:hover {
   opacity: 1;
 }
 
-.controls .big {
-  font-size: 26px;
-}
-
-.progress-wrap {
-  flex: 1;
+.play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.play-btn:hover {
+  transform: scale(1.05);
+}
+
+/* 波形进度条 */
+.wave-container {
+  width: 100%;
+  max-width: 500px;
+  height: 32px;
+  position: relative;
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
-.bar {
-  flex: 1;
-  height: 3px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.fill {
+.wave-bars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  transition: width 0.1s;
 }
 
-.time {
+.wave-bar {
+  flex: 1;
+  background: #e5e7eb;
+  border-radius: 2px;
+  transition: height 0.1s ease, background 0.2s;
+  min-height: 4px;
+}
+
+.wave-bar.active {
+  background: linear-gradient(180deg, var(--primary-light), var(--primary));
+}
+
+.time-overlay {
+  position: absolute;
+  bottom: -18px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
   font-size: 11px;
-  color: #aaa;
-  min-width: 32px;
-  text-align: center;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* 右侧 */
+.player-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 160px;
+  justify-content: flex-end;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.icon-btn:hover {
+  opacity: 1;
 }
 </style>

@@ -33,43 +33,157 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="playlist-container">
-    <h2>🔥 热门歌单</h2>
+  <div class="playlist-section">
+    <div class="section-header">
+      <h2>推荐歌单</h2>
+      <router-link to="/" class="see-all">查看全部 →</router-link>
+    </div>
+    
     <div v-if="loading" class="status">加载中...</div>
     <div v-else-if="error" class="status error">{{ error }}</div>
     <div v-else-if="playlists.length === 0" class="status">暂无歌单</div>
-    <div v-else class="playlist-grid">
+    
+    <div v-else class="card-grid">
       <router-link 
         v-for="playlist in playlists" 
         :key="playlist.id"
         :to="`/playlist/${playlist.id}`"
-        class="playlist-card"
+        class="card"
       >
-        <div class="playlist-cover">
+        <div class="card-cover">
           <img v-if="playlist.cover_url" :src="getImageUrl(playlist.cover_url)" :alt="playlist.name" />
-          <div v-else class="cover-placeholder">🎵</div>
+          <div v-else class="cover-fallback">🎵</div>
+          <div class="card-overlay">
+            <span class="play-icon">▶</span>
+          </div>
         </div>
-        <h3>{{ playlist.name }}</h3>
-        <p class="meta">
-          👤 {{ playlist.creater_id }} · 
-          ❤️ {{ playlist.collect_num }} · 
-          🎶 {{ playlist.songs_count }}首
-        </p>
+        <h3 class="card-title">{{ playlist.name }}</h3>
+        <p class="card-meta">{{ playlist.songs_count }}首 · {{ playlist.collect_num }}收藏</p>
       </router-link>
     </div>
   </div>
 </template>
 
 <style scoped>
-.playlist-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-.status { text-align: center; padding: 40px; color: #666; }
-.error { color: #ff4757; }
-.playlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
-.playlist-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-decoration: none; color: inherit; transition: transform 0.2s; }
-.playlist-card:hover { transform: translateY(-4px); }
-.playlist-cover { width: 100%; height: 150px; border-radius: 8px; overflow: hidden; }
-.playlist-cover img { width: 100%; height: 100%; object-fit: cover; }
-.cover-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 48px; }
-h3 { margin: 12px 0 8px; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.meta { color: #666; font-size: 13px; }
+.playlist-section {
+  margin-bottom: 40px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.see-all {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.see-all:hover {
+  color: var(--primary);
+}
+
+.status {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+.error {
+  color: #ef4444;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+}
+
+.card {
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+.card:hover .card-overlay {
+  opacity: 1;
+}
+
+.card-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+
+.card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-fallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+}
+
+.card-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.play-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-meta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
 </style>
